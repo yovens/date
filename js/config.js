@@ -18,7 +18,7 @@ window.INVITE = {
     // Après activation, tu peux remplacer l'email par l'alias secret que FormSubmit t'envoie.
     email: "jocelynyouvens48@gmail.com",
     // Ton numéro WhatsApp au format international, chiffres uniquement (ex : 50934123456)
-    whatsapp: "40160335"
+    whatsapp: "50940160335"
   },
 
   intro: "J'ai une question importante à te poser. Prends ton temps… mais pas trop.",

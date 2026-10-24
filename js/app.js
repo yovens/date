@@ -487,6 +487,14 @@
     Object.assign(state, saved);
     renderDone(true);
     show("s-done");
+    // Réponse jamais arrivée (mode test ou échec) et email maintenant configuré : on renvoie
+    if (state.status !== "sent" && emailReady()) {
+      $("#sendStatus").textContent = "Envoi de ta réponse…";
+      sendEmail()
+        .then(() => { state.status = "sent"; })
+        .catch(() => { state.status = "failed"; })
+        .then(() => { store.set(state); renderDone(true); });
+    }
   } else {
     show("s-envelope");
   }
