@@ -27,7 +27,9 @@
   const fromIso = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   const longDay = s => cap(fromIso(s).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }));
+  const w3Key = () => (CFG.notify && CFG.notify.web3formsKey || "").trim();
   const emailReady = () => {
+    if (w3Key() && !w3Key().startsWith("COLLE")) return true;
     const e = (CFG.notify && CFG.notify.email || "").trim();
     return e && !e.startsWith("ton-email");
   };
@@ -330,10 +332,8 @@
     const triesLine = state.tries === 0
       ? "Li di WI tousuit, li pa menm eseye peze NON 🔥"
       : `Li te eseye peze NON ${state.tries} fwa anvan l rann tèt li 😂`;
-    const payload = {
-      _subject: `🎉 Frè, ou gen yon date! ${state.name} di WI`,
-      _template: "table",
-      _captcha: "false",
+    const subject = `🎉 Frè, ou gen yon date! ${state.name} di WI`;
+    const fields = {
       "📣 Nouvèl la": `Frè! Nou gen yon date la wi 😎🔥 ${state.name} aksepte envitasyon w lan. ${triesLine}. Prepare w, pa fè nou wont!`,
       "👤 Kiyès": state.name,
       "📅 Ki jou": longDay(state.day),
@@ -348,18 +348,36 @@
       "✉️ Li louvri lèt la": state.openedAt ? new Date(state.openedAt).toLocaleString("fr-FR") : "—",
       "✅ Li reponn": new Date(state.answeredAt).toLocaleString("fr-FR")
     };
+    // Web3Forms si une clé est fournie (recommandé), sinon FormSubmit
+    const useW3 = w3Key() && !w3Key().startsWith("COLLE");
+    const url = useW3
+      ? "https://api.web3forms.com/submit"
+      : `https://formsubmit.co/ajax/${encodeURIComponent(CFG.notify.email.trim())}`;
+    const payload = useW3
+      ? { access_key: w3Key(), subject, from_name: `Invitation · ${state.name}`, ...fields }
+      : { _subject: subject, _template: "table", _captcha: "false", ...fields };
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 15000);
-    return fetch(`https://formsubmit.co/ajax/${encodeURIComponent(CFG.notify.email.trim())}`, {
+    return fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify(payload),
       signal: ctrl.signal
     })
-      .then(r => r.json())
+      .then(r => r.text().then(t => {
+        let j = {};
+        try { j = JSON.parse(t); } catch (e) { throw new Error(`Réponse invalide (HTTP ${r.status})`); }
+        return j;
+      }))
       .then(j => {
         clearTimeout(timer);
         if (!(j.success === true || j.success === "true")) throw new Error(j.message || "Envoi refusé");
+      })
+      .catch(e => {
+        clearTimeout(timer);
+        if (e.name === "AbortError") throw new Error("Délai dépassé (connexion lente)");
+        if (e instanceof TypeError) throw new Error("Connexion impossible au service d'email");
+        throw e;
       });
   }
 
@@ -371,8 +389,8 @@
     state.answeredAt = new Date().toISOString();
     let status = "demo";
     if (emailReady()) {
-      try { await sendEmail(); status = "sent"; }
-      catch (e) { console.warn("[invitation]", e); status = "failed"; }
+      try { await sendEmail(); status = "sent"; state.lastError = ""; }
+      catch (e) { console.warn("[invitation]", e); status = "failed"; state.lastError = e.message; }
     }
     state.status = status;
     store.set(state);
@@ -447,6 +465,9 @@
       demo: "Mode test : aucun email n'a été envoyé. Renseigne ton adresse dans js/config.js.",
       failed: "Oups, la confirmation n'est pas partie. Réessaie, ou écris-moi directement sur WhatsApp."
     }[status] || "";
+    if (status === "failed" && state.lastError) {
+      s.append(document.createElement("br"), el("small", "status-detail", `Détail : ${state.lastError}`));
+    }
   }
   function renderDone(again) {
     $("#doneName").textContent = state.name || displayName;
@@ -474,8 +495,8 @@
   $("#retryBtn").addEventListener("click", async () => {
     const b = $("#retryBtn");
     b.disabled = true; b.textContent = "Envoi…";
-    try { await sendEmail(); state.status = "sent"; }
-    catch (e) { state.status = "failed"; }
+    try { await sendEmail(); state.status = "sent"; state.lastError = ""; }
+    catch (e) { state.status = "failed"; state.lastError = e.message; }
     store.set(state);
     b.disabled = false; b.textContent = "Renvoyer ma réponse";
     renderDone(false);
@@ -491,8 +512,8 @@
     if (state.status !== "sent" && emailReady()) {
       $("#sendStatus").textContent = "Envoi de ta réponse…";
       sendEmail()
-        .then(() => { state.status = "sent"; })
-        .catch(() => { state.status = "failed"; })
+        .then(() => { state.status = "sent"; state.lastError = ""; })
+        .catch(e => { state.status = "failed"; state.lastError = e.message; })
         .then(() => { store.set(state); renderDone(true); });
     }
   } else {

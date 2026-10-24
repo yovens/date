@@ -14,6 +14,10 @@ window.INVITE = {
 
   // Où tu reçois la réponse
   notify: {
+    // ✅ RECOMMANDÉ : clé Web3Forms (gratuite). Va sur https://web3forms.com,
+    // entre ton email, colle ici la clé reçue. Si elle est remplie, elle remplace FormSubmit.
+    web3formsKey: "1f9fda57-effb-45cb-baae-a8b8f5efc58b",
+
     // Ton email (service gratuit FormSubmit, voir README)
     // Après activation, tu peux remplacer l'email par l'alias secret que FormSubmit t'envoie.
     email: "jocelynyouvens48@gmail.com",
