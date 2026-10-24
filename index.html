@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#efe7ff">
+<title>Une lettre pour toi</title>
+<meta name="description" content="Tu as reçu une lettre. Ouvre-la, j'ai une question à te poser.">
+<meta property="og:title" content="Tu as reçu une lettre 💌">
+<meta property="og:description" content="Ouvre-la, j'ai une question à te poser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%8C%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Serif:ital@0;1&family=Patrick+Hand&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="hearts" aria-hidden="true"></canvas>
+
+<main class="app">
+
+  <!-- 1. L'enveloppe -->
+  <section class="screen" id="s-envelope" data-screen hidden>
+    <p class="eyebrow">Courrier spécial</p>
+    <h1 class="h-display">Tu as reçu <em>une lettre</em></h1>
+    <button class="envelope" id="envelope" type="button" aria-label="Ouvrir la lettre">
+      <span class="env-back"></span>
+      <span class="env-letter"><span class="hand">Pour toi</span></span>
+      <span class="env-front">
+        <span class="env-to hand">Pour <strong data-her></strong></span>
+        <span class="stamp" aria-hidden="true"><span class="stamp-heart">♥</span><small>Love post</small></span>
+        <span class="postmark" id="postmark" aria-hidden="true"></span>
+      </span>
+      <span class="env-flap"></span>
+      <span class="env-sticker" aria-hidden="true">♥</span>
+    </button>
+    <p class="hint">Touche l'enveloppe pour l'ouvrir</p>
+  </section>
+
+  <!-- 2. La question -->
+  <section class="screen" id="s-question" data-screen hidden>
+    <article class="letter">
+      <p class="hand greet">Salut <span data-her></span>,</p>
+      <p class="lead" id="introText"></p>
+      <h2 class="h-display q" id="questionText"></h2>
+      <div class="answers">
+        <button class="btn btn-yes" id="yesBtn" type="button">Oui</button>
+        <button class="btn btn-no" id="noBtn" type="button">Non</button>
+      </div>
+      <p class="bubble hand" id="bubble" aria-live="polite"></p>
+      <p class="ps hand">P.S. Il n'y a qu'une seule bonne réponse 😌</p>
+    </article>
+  </section>
+
+  <!-- 3. Elle a dit oui -->
+  <section class="screen" id="s-yay" data-screen hidden>
+    <div class="big-heart" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.6 3 5 6.6 5c2.1 0 3.6 1.2 4.4 2.6h2C13.8 6.2 15.3 5 17.4 5 21 5 23 8.6 21.6 11.8 19.5 16.4 12 21 12 21z"/></svg>
+    </div>
+    <h2 class="h-display">Ouiii&nbsp;! <em>Je le savais.</em></h2>
+    <p class="lead">Maintenant on organise ça ensemble. Tu choisis, je m'occupe du reste.</p>
+    <button class="btn btn-primary" id="startPlan" type="button">C'est parti</button>
+  </section>
+
+  <!-- 4. Les étapes -->
+  <section class="screen plan" id="s-plan" data-screen hidden>
+    <header class="plan-head">
+      <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+      <p class="step-count" id="stepCount"></p>
+    </header>
+
+    <div class="step" data-step="when">
+      <h2 class="h-step">Quand es-tu libre&nbsp;?</h2>
+      <p class="sub">Choisis un jour, puis une heure.</p>
+      <h3 class="label">Le jour</h3>
+      <div class="days" id="days" aria-label="Choisis un jour"></div>
+      <label class="other-date" for="otherDate">
+        <span>Une autre date&nbsp;?</span>
+        <input type="date" id="otherDate">
+      </label>
+      <h3 class="label">L'heure</h3>
+      <div class="chips" id="times" aria-label="Choisis une heure"></div>
+    </div>
+
+    <div class="step" data-step="what" hidden>
+      <h2 class="h-step">Qu'est-ce qu'on fait&nbsp;?</h2>
+      <p class="sub">Choisis ce qui te fait le plus envie.</p>
+      <div class="cards" id="activities" aria-label="Choisis une activité"></div>
+    </div>
+
+    <div class="step" data-step="food" hidden>
+      <h2 class="h-step">Et on mange quoi&nbsp;?</h2>
+      <p class="sub">Sois honnête, c'est noté.</p>
+      <div class="cards" id="foods" aria-label="Choisis le repas"></div>
+    </div>
+
+    <div class="step" data-step="details" hidden>
+      <h2 class="h-step">Les derniers détails</h2>
+      <p class="sub">Promis, c'est la dernière étape.</p>
+      <h3 class="label">On se retrouve comment&nbsp;?</h3>
+      <div class="chips" id="meet" aria-label="Comment on se retrouve"></div>
+      <h3 class="label">Le style de la soirée</h3>
+      <div class="chips" id="dress" aria-label="Le style de la soirée"></div>
+      <div class="field">
+        <label for="herName">Ton prénom</label>
+        <input id="herName" type="text" autocomplete="given-name" maxlength="40" placeholder="Ton prénom">
+      </div>
+      <div class="field">
+        <label for="contact">Ton numéro WhatsApp <span>facultatif</span></label>
+        <input id="contact" type="tel" inputmode="tel" autocomplete="tel" maxlength="25" placeholder="+509 …">
+      </div>
+      <div class="field">
+        <label for="note">Un petit mot pour moi&nbsp;? <span>facultatif</span></label>
+        <textarea id="note" rows="3" maxlength="400" placeholder="Une envie, une condition, un secret…"></textarea>
+      </div>
+    </div>
+
+    <div class="step" data-step="recap" hidden>
+      <h2 class="h-step">On récapitule</h2>
+      <p class="sub">Vérifie que tout est parfait. Tu peux modifier chaque ligne.</p>
+      <dl class="recap" id="recap"></dl>
+    </div>
+
+    <footer class="plan-nav">
+      <p class="nav-hint" id="navHint" aria-live="polite"></p>
+      <div class="nav-row">
+        <button class="btn btn-ghost" id="backBtn" type="button">Retour</button>
+        <button class="btn btn-primary" id="nextBtn" type="button">Continuer</button>
+      </div>
+    </footer>
+  </section>
+
+  <!-- 5. Confirmé -->
+  <section class="screen" id="s-done" data-screen hidden>
+    <p class="eyebrow">Rendez-vous confirmé</p>
+    <h2 class="h-display">C'est noté, <em id="doneName"></em>&nbsp;!</h2>
+    <p class="lead" id="doneLead">J'ai bien reçu ta réponse. Il ne te reste plus qu'à te faire belle… enfin, encore plus.</p>
+
+    <div class="ticket">
+      <div class="ticket-top">
+        <div class="ticket-brand">
+          <span class="ticket-kicker">Billet</span>
+          <strong>Un date à deux</strong>
+        </div>
+        <span class="ticket-no" id="ticketNo"></span>
+      </div>
+      <div class="countdown" id="countdown" aria-live="polite"></div>
+      <div class="ticket-cut" aria-hidden="true"></div>
+      <dl class="ticket-info" id="ticketInfo"></dl>
+      <p class="ticket-admit">Admission · 2 personnes · <span data-from></span> &amp; <span id="admitName"></span></p>
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-primary" id="calBtn" target="_blank" rel="noopener">Ajouter à mon agenda</a>
+      <a class="btn btn-ghost" id="waBtn" target="_blank" rel="noopener">Lui écrire sur WhatsApp</a>
+      <button class="btn btn-ghost" id="retryBtn" type="button" hidden>Renvoyer ma réponse</button>
+    </div>
+    <p class="status" id="sendStatus" role="status"></p>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
